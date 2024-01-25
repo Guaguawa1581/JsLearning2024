@@ -272,7 +272,76 @@ graph TD
     E --> |No|F{默認綁定}
     E --> |Yes|EA[ex: 'obj.method',<br> this會被綁定到obj]
 ```
+
+#### 2.7 Test
+```javascript
+var color = 'red';
+function A() {
+    var color = 'yellow';
+    console.log(this.color);
+}
+function B(func) {
+    return func();
+}
+var obj = {
+    color: 'grean',
+    showColor() {
+        console.log(this.color);
+    },
+    getColor() {
+        return function () {
+            console.log(this.color);
+        };
+    },
+};
+var C = obj.showColor;
+obj.E = A;
+var D = obj.getColor();
+
+//根據以上程式碼，執行下列各函式，會印出什麼?
+
+A(); //red 
+//A()不帶修飾的在全域被調用，默認綁定this在函式調用的上下文中，取得在全域的color='red'
+C(); //green 
+//C()透過物件方法obj.showColor的方式調用該函式，this隱式綁定在obj這個作用域
+obj.E(); //red  
+//前面透過屬性賦值的方式將A()賦值給obj中的E，但E()在全域中調用，等同於題目A
+B(obj.showColor); //green 
+//B()將傳入的參數返回並執行，等於調用位置跟B()同層，直接透過物件方法的方式調用this，同題目C
+D(); //red 
+//D指向obj中getColor，其返回一個函式並執行並調用this，等同不帶修飾在全域中被調用，等同於題目A
+```
 ### 3. 對象
+this根據函數調用位置的不同，會造成this綁定的對象不同，而這裡的對象又是什麼?
+#### 3.1 對象與資料類型
+##### 語言類型(數據類型)
+- string
+- number
+- boolean
+- null
+- undefined
+- object
+**簡單基本類型並不是對象**
+
+
+在 JavaScript 中宣告一個 Object （物件）時使用首尾大括號建立範圍， Object 內的 Property （特性）為一個 key （鍵）搭配一個 value （值），並以逗號區隔每個 Property：
+
+```javascript
+//宣告一個 Object 物件，搭配首尾大括號
+let mary = {
+    //每個 Property 間使用逗號區隔
+    name: 'Mary',
+    sayHello: function(){
+        console.log(`Hello ${this.name}`)
+    },
+}
+```
+
+對象與類型
+淺複製與深複製
+
+*原理是這樣的，不同的物件在底層都表示為二進制，在 JavaScript 中二進位前三位都為 0 的話會被判
+斷為 object 類型，null 的二進位表示是全 0，自然前三位也是 0，所以執行 typeof 時會傳回“object”
 
 
 
