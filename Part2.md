@@ -24,6 +24,82 @@ console.log( this.a );
 var a = 2;
 foo(); // TypeError: this is undefined
 ```
+**嚴格模式**
+嚴格模式的目的是提高 JavaScript 程式碼的安全性和可讀性。
+- 禁止使用未經聲明的變數
+```javascript
+"use strict";
+x = 10;
+// Uncaught ReferenceError: x is not defined
+```
+- 禁止重複定義變數
+```javascript
+function sum(a, a) {
+  "use strict";
+  return a + a;
+}
+// Uncaught SyntaxError: Duplicate parameter name not allowed in this context
+```
+- 不能使用 ‘with’ 語法
+```javascript
+const obj = {
+  a: "aaaaaa",
+  b: "bbbbbbbbb"
+};
+function testWith(obj) {
+  "use strict";
+  with (obj) {
+    a = "uuuuuiiii";
+  }
+}
+testWith(obj);
+console.log(obj);
+//SyntaxError: Strict mode code may not include a with statement
+```
+
+- 不能向不可寫的屬性賦值
+```javascript
+  'use strict';
+  var obj = {};
+  Object.defineProperty(obj, 'readOnly', { writable: false });
+  obj.readOnly = 5; // 抛出错误：Cannot assign to read only property 'readOnly' of object '#<Object>'
+```
+
+- 不能刪除變量
+```javascript
+  function bb() {
+    'use strict';
+    var x = 3.14;
+    delete x;
+    console.log(x);
+  }
+  bb(); //SyntaxError: Delete of an unqualified identifier in strict mode.
+```
+
+- this的綁定
+在嚴格模式下，this禁止指向全域，會返回undefined
+```javascript
+function ccc() {
+  "use strict";
+  console.log(this);
+}
+function ccc2() {
+  console.log(this);
+}
+ccc(); //undefined
+ccc2(); //window{...}
+```
+
+- arguments、eval、implements, interface, let, package, private, protected, public, static, yield， 一些會使用到的操作符不能作為變數名稱
+```javascript
+function ddd() {
+  "use strict";
+  const arguments = "wowowoo";
+  console.log(arguments);
+}
+ddd(); //SyntaxError: Unexpected eval or arguments in strict mode
+```
+
 #### 2.2 隱式綁定
 當函式被當作物件方法呼叫時(如："user.speak()")，this會被隱式綁定到那個物件
 ```javascript
@@ -65,7 +141,7 @@ func.call(null,a,b,c)
 // 原函式
 func(a,b,c)
 // call()
-func.call(null,[a,b,c])
+func.apply(null,[a,b,c])
 ```
 **bind()**
 會返還一個**綁定好this的函數**，且**一但被綁定，其this無法再被修改**
@@ -200,6 +276,46 @@ person2.showName();  // this 指向 person2，輸出 Bob
 1. showName 函式獨立於任何對象。
 2. 當 showName 被不同的對象呼叫時（如 person1.showName() 或 person2.showName()），this 分別指向那個特定的對象。
 
+##### Test 如何同時取的內部與外部的this
+```javascript
+const title = "outer Group";
+const students = ["aaaa", "dd", "Alice"];
+const group = {
+  title: "Our Group",
+  students: ["John", "Pete", "Alice"],
+  showList() {
+    this.students.forEach((student) => {
+      console.log(this.title + ": " + student + " " );
+    }
+    );
+  },
+};
+group.showList();
+```
+**Answer**
+```javascript
+// const title = "outer Group"; // 不會成為全域對象的屬性 this取不到
+// const students = ["aaaa", "dd", "Alice"];
+window.title = "outer Group"; //同等var title = "outer Group";
+window.students = ["aaaa", "dd", "Alice"];
+
+const group = {
+  title: "Our Group",
+  students: ["John", "Pete", "Alice"],
+  self: this,
+  showList() {
+    this.students.forEach((student) => {
+      console.log(this.title + ": " + student + " " + this.self.title);
+    }
+    );
+  },
+};
+group.showList();
+```
+let, const 不會成為全局物件的屬性，
+在全局中使用var聲明變量，var聲明的變量會是全域變數 (亦即成為全域物件的屬性)
+
+
 
 #### 2.6 this綁定方式的優先級
 綁定的方式影響到this的值，當多條規則衝突的時候的優先級
@@ -302,15 +418,16 @@ var D = obj.getColor();
 
 A(); //red 
 //A()不帶修飾的在全域被調用，默認綁定this在函式調用的上下文中，取得在全域的color='red'
-C(); //green 
-//C()透過物件方法obj.showColor的方式調用該函式，this隱式綁定在obj這個作用域
-obj.E(); //red  
-//前面透過屬性賦值的方式將A()賦值給obj中的E，但E()在全域中調用，等同於題目A
-B(obj.showColor); //green 
-//B()將傳入的參數返回並執行，等於調用位置跟B()同層，直接透過物件方法的方式調用this，同題目C
+C(); //red
+//C指向obj中的showColor，但在全域中調用，等同於題目A
+obj.E(); //green
+//將A賦值給E，並在obj中調用E()，this綁定obj  
+B(obj.showColor); //red 
+//B()將傳入的參數返回並執行，等於調用位置跟B()同層，直接執行showColor
 D(); //red 
-//D指向obj中getColor，其返回一個函式並執行並調用this，等同不帶修飾在全域中被調用，等同於題目A
+//D指向obj中getColor，其返回一個函式並執行並s調用this，等同不帶修飾在全域中被調用，等同於題目A
 ```
+
 ### 3. 對象
 this根據函數調用位置的不同，會造成this綁定的對象不同，而這裡的對象又是什麼?
 #### 3.1 對象與資料類型
