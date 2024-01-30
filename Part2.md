@@ -428,39 +428,6 @@ D(); //red
 //D指向obj中getColor，其返回一個函式並執行並s調用this，等同不帶修飾在全域中被調用，等同於題目A
 ```
 
-### 3. 對象
-this根據函數調用位置的不同，會造成this綁定的對象不同，而這裡的對象又是什麼?
-#### 3.1 對象與資料類型
-##### 語言類型(數據類型)
-- string
-- number
-- boolean
-- null
-- undefined
-- object
-**簡單基本類型並不是對象**
-
-
-在 JavaScript 中宣告一個 Object （物件）時使用首尾大括號建立範圍， Object 內的 Property （特性）為一個 key （鍵）搭配一個 value （值），並以逗號區隔每個 Property：
-
-```javascript
-//宣告一個 Object 物件，搭配首尾大括號
-let mary = {
-    //每個 Property 間使用逗號區隔
-    name: 'Mary',
-    sayHello: function(){
-        console.log(`Hello ${this.name}`)
-    },
-}
-```
-
-對象與類型
-淺複製與深複製
-
-*原理是這樣的，不同的物件在底層都表示為二進制，在 JavaScript 中二進位前三位都為 0 的話會被判
-斷為 object 類型，null 的二進位表示是全 0，自然前三位也是 0，所以執行 typeof 時會傳回“object”
-
-
 
 
 
