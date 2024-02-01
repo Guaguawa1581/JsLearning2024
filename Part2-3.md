@@ -111,7 +111,194 @@ let obj1 = { x: 1 },
 console.log(obj1 === obj2) // false
 ```
 
-#### 3.3 深複製(deep copy) & 淺複製(shallow copy)
+
+
+#### 3.3 屬性描述符
+##### 3.3.1 WHAT IS
+ES5後所以屬性具備了屬性描述符，對象的屬性數據隱含了三個特性:writable(可寫性), enumerable(可枚舉), configurable(可配置)，
+透過Object.defineProperty(..)新增修改屬性的特性
+```javascript
+var myObject = {
+a:2
+};
+Object.getOwnPropertyDescriptor( myObject, "a" );
+// {
+// value: 2,
+// writable: true,
+// enumerable: true,
+// configurable: true
+// }
+```
+
+1.writable 可寫性
+決定能否修改屬性的值
+
+```javascript
+var myObject = {};
+Object.defineProperty( myObject, "a", {
+value: 2,
+writable: false, // 不可寫！
+configurable: true,
+enumerable: true
+} );
+myObject.a = 3;
+myObject.a; // 2
+```
+静默失败（silently failed）
+**嚴格模式** 會 TypeError
+
+2.configurable 可配置
+決定之後能否再更改設定, 後面再更改設定或delete，會TypeError
+
+```javascript
+var myObject = {
+    a: 2
+};
+myObject.a = 3;
+myObject.a; // 3
+Object.defineProperty(myObject, "a", {
+    value: 4,
+    writable: true,
+    configurable: false, // 不可配置！
+    enumerable: true
+});
+myObject.a; // 4
+myObject.a = 5;
+myObject.a; // 5
+
+Object.defineProperty(myObject, "a", {
+    value: 6,
+    writable: true,
+    configurable: true,
+    enumerable: true
+}); // 又更改設定 TypeError
+```
+
+
+
+3.enumerable 可枚舉
+決定屬性是否會在for...in..循環中出現
+
+```javascript
+const obj = {
+    property1: 'Value 1',
+    property2: 'Value 2',
+    property3: 'Value 3'
+};
+
+// 將property2的enumerable屬性設置為false
+Object.defineProperty(obj, 'property2', {
+    enumerable: false
+});
+
+for (let key in obj) {
+    console.log(key); // 只會列舉property1和property3
+}
+```
+
+##### 3.3.2 不變性
+1.Object.preventExtensions(obj)
+禁止擴展
+```javascript
+const obj = { prop1: 'value1', prop2: "value2" };
+
+Object.preventExtensions(obj);
+
+obj.prop1 = 'newvalue1'; // 修改現有屬性
+obj.prop3 = 'value3'; // 無法添加新屬性
+delete obj.prop1; // 可以刪除現有屬性
+console.log(obj); // {prop2: 'value2'} 
+```
+2.Object.seal(obj)
+在對象上調用Object.preventExtensions()並將 configurable : false
+```javascript 
+const obj = { prop1: 'value1' };
+
+Object.seal(obj);
+
+obj.prop2 = 'value2'; // 無法添加新屬性
+obj.prop1 = 'newvalue1'; // 可以修改現有屬性
+delete obj.prop1; // 無法刪除現有屬性
+console.log(obj); //{ prop1: 'newvalue1' }
+```
+
+3.Object.freeze(obj)
+在對象上調用Object.seal()並將 writable : false
+```javascript 
+const obj = { prop1: 'value1' };
+
+Object.freeze(obj);
+
+obj.prop2 = 'value2'; // 無法添加新屬性
+obj.prop1 = 'newvalue1'; // 無法修改現有屬性
+delete obj.prop1; // 無法刪除現有屬性
+
+console.log(obj); //{ prop1: 'value1' }
+```
+
+##### 3.3.3 Getter和Setter
+在 ES5 中可以使用 getter 和 setter 部分來改寫預設操作，但只能套用在單一屬性上
+getter 是一個隱藏函數，在取得屬性值時呼叫。
+setter 也是一個隱藏函數，在設定屬性值時呼叫。
+```javascript
+var myObject = {
+    // getter
+    get a() {
+        return this._a_;
+    },
+    // setter
+    set a(val) {
+        this._a_ = val * 2;
+    }
+};
+myObject.a = 2;
+console.log(myObject.a); // 4
+```
+不管是物件文字語法中的 get a() { .. }，還是 defineProperty(..) 中的明確定義，二者都會在物件中建立一個不包含值的屬性(範例中的a)
+
+##### 3.3.4 存在性
+Object.hasOwnProperty(屬性)可以檢查是否有這個屬性
+```javascript
+var myObject = {
+    a: undefined
+};
+console.log(myObject.a);  // undefined
+console.log(myObject.b);  // undefined
+console.log(myObject.hasOwnProperty("a"));  // true
+console.log(myObject.hasOwnProperty("b"));  // false
+```
+
+##### 3.3.5 枚舉性
+enumerable 控制該屬性是否能被枚舉(可以出現在物件屬性的loop中)
+
+```javascript
+var myObject = {};
+Object.defineProperty(
+    myObject,
+    "a",
+    { enumerable: true, value: 2 }
+);
+Object.defineProperty(
+    myObject,
+    "b",
+    { enumerable: false, value: 3 }  // 讓 b 不能枚舉
+);
+console.log(myObject.b); // 3
+console.log("b" in myObject); // true
+console.log(myObject.hasOwnProperty("b")); // true
+
+for (var k in myObject) {
+    console.log(k, myObject[k]);
+} // "a" 2  沒有"b"
+console.log(myObject.propertyIsEnumerable("a")); // true
+console.log(myObject.propertyIsEnumerable("b")); // false
+console.log(Object.keys(myObject)); // ["a"]
+console.log(Object.getOwnPropertyNames(myObject)); // ["a", "b"]
+```
+**Object.propertyIsEnumerable( "a" ) 區分屬性是否可以枚舉**
+
+
+#### 3.4 深複製(deep copy) & 淺複製(shallow copy)
 JS 中，資料的型別主要有分為「基本型別 (Primitive type)」 以及「物件 (Object)」，兩者最大的差異在於：
 
 **Primitive type data**
@@ -356,124 +543,4 @@ console.log(originalData.obj.secondLayerNum);
 ```
 
 
---------------
-
-#### 屬性描述符
-可以更改屬性的特性
-writable: false,
-静默失败（silently failed）
-
-configurable: false, // 不可配置！
-後面再更改設定或delete，會TypeError
-
-關於屬性設定的各項
-writable: true,
-configurable: true,
-enumerable: true
-
-writable 决定是否可以修改属性的值。
-configurable 決定之後是否開放屬性修改
-只要属性是可配置的，就可以使用 defineProperty(..) 方法来修改属性描述符：
-
-禁止擴展
-Object.preventExtensions( myObject )
-Object.seal() 調用Object.preventExtensions，密封之後不僅不能添加新屬性，也不能重新配置或刪除任何現有屬性（雖然可以修改屬性的值）
-Object.freeze()調用Object.seal
-
-#### Getter和Setter
-
-存在性
-Object.hasOwnProperty
-```javascript
-var myObject = {
-    a: undefined
-};
-console.log(myObject.a);  // undefined
-console.log(myObject.b);  // undefined
-console.log(myObject.hasOwnProperty("a"));  // true
-console.log(myObject.hasOwnProperty("b"));  // false
-```
-
-#### 枚舉
-
-enumerable 控制該屬性是否能被枚舉(可以出現在物件屬性的loop中)
-
-```javascript
-var myObject = {};
-Object.defineProperty(
-    myObject,
-    "a",
-    { enumerable: true, value: 2 }
-);
-Object.defineProperty(
-    myObject,
-    "b",
-    // 让 b 不可枚举
-    { enumerable: false, value: 3 }
-);
-console.log(myObject.b); // 3
-console.log("b" in myObject); // true
-console.log(myObject.hasOwnProperty("b")); // true
-
-for (var k in myObject) {
-    console.log(k, myObject[k]);
-} // "a" 2 沒有"b"
-```
-
-區分屬性是否可以枚舉
-Object.propertyIsEnumerable( "a" )
-Object.keys() 和 Object.getOwnPropertyNames(..) 都只会查找对象直接包含的属性。
-
-
-
-
-
-
-
-
-```javascript
-
-var randoms = {
-    [Symbol.iterator]: function () {
-        return {
-            next: function () {
-                return { value: Math.random() };
-            }
-        };
-    }
-};
-var randoms_pool = [];
-for (var n of randoms) {
-    randoms_pool.push(n);
-    // 防止无限运行！
-    if (randoms_pool.length === 100) break;
-}
-```
-
-
-
-在 JavaScript 中宣告一個 Object （物件）時使用首尾大括號建立範圍， Object 內的 Property （特性）為一個 key （鍵）搭配一個 value （值），並以逗號區隔每個 Property：
-
-```javascript
-//宣告一個 Object 物件，搭配首尾大括號
-let mary = {
-    //每個 Property 間使用逗號區隔
-    name: 'Mary',
-    sayHello: function(){
-        console.log(`Hello ${this.name}`)
-    },
-}
-```
-
-
-
-
-
-
-
-對象與類型
-淺複製與深複製
-
-*原理是這樣的，不同的物件在底層都表示為二進制，在 JavaScript 中二進位前三位都為 0 的話會被判
-斷為 object 類型，null 的二進位表示是全 0，自然前三位也是 0，所以執行 typeof 時會傳回“object”
 
