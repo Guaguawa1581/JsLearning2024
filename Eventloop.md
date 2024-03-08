@@ -75,7 +75,8 @@ fn3();
 
 ### Task(Macrotask) 大型任務
 包含但不限於:
-* script(整體程式碼)
+* 解析HTML
+* **執行 JavaScript 主線程式 (mainline)、script**
 * setTimeout
 * setInterval
 * I/O、事件
@@ -89,7 +90,7 @@ fn3();
 
 ### Microtask 微任務
 包含但不限於:
-* Promise then callback (executor 是同步的)
+* Promise then callback (executor 是同步的, async跟await是promise的語法糖)
 * MutationObserver callback
 ... 
 
@@ -98,7 +99,7 @@ fn3();
 ### 運作流程
 ![eventLoop](https://www.programfarmer.com/images/articles/javascript-browser-event-loop/09.png)
 
-1. 在一次的循環中，首先會先檢查 Task Queue 中，是否有 Task 存在
+1. 在一次的循環中，首先會先檢查 Task Queue 中，是否有 Task 存在(script也算)
 2. 如果有 Task 就執行之，沒有就直接進入檢查 Microtask Queue
 3. 當進行完一個 Task 後，會進入檢查 Microtask Queue 是否有 Microtask 微任務
 4. 如果有 Microtask 就執行之，並且會將 Microtask Queue 中所有 Microtask 執行完畢後，才會進入下個 render 的階段
@@ -106,6 +107,7 @@ fn3();
 
 **單次循環中，只處理一項大型任務 (Task)，但是所有微任務 (Microtask) 都會處理完畢。**
 
+**ex:**
 ```javascript=
 console.log('script start');
 
@@ -133,23 +135,60 @@ new Promise(function (resolve, reject) {
 
 console.log('script end');
 
+// script start
+// promise 1 resolve
+// promise 2 resolve
+// script end
+// promise 1 callback
+// promise 2 callback
+// setTimeout callback2222222222
+// setTimeout callback
+
 ```
 
-該案例的印出順序:
+該案例的執行順序:
 
 第一次循環
-* script start
-* promise 1 resolve
-* promise 2 resolve
-* script end
-* promise 1 callback
-* promise 2 callback
+1. 檢查Task，有script這個task，運行script
+2. 執行promise的executor，印出promise 1 resolve，將promise的cb function放到Microtask
+3. script這個task執行完畢後，檢查Microtask
+4. 執行Microtask中的promise cb
+5. render
 
 第二次循環
-* setTimeout callback  
+1. 檢查task queue，執行先前setTimeout的cb
 "setTimeout callback2222222222"
+2. render
 
 第三次循環
-* setTimeout callback  
+1. 檢查task queue，執行先前setTimeout的cb
 "setTimeout callback"
+2. render
 
+**★多個setTimeout加入callstack的順序取決於計時器的時間**
+
+## 結論
+### Event Loop
+Js執行的流程的循環，按照流程排序每次循環的執行順序
+Task → Microtask → render
+**每次循環只執行一個Task**
+
+### 實現多工 Task
+把需要額外處理的任務交給執行環境去處理
+處理好後放入序列queue中，等待加入Callstack
+其又分為:
+
+#### 大型任務(Task/ Macrotask):
+main script
+event事件
+setTimeout
+setInterval....等
+
+會依據Task的種類，會放入不同queue, ex: timer queue, DOMevent queue...
+queue放入的順序依據環境的設定
+#### 微任務(Microtask):
+Promise....等
+
+### Callstack
+JS當前執行的主序列位置，後進先出(Last-In-First-Out)
+每次循環開始會將Task放入，清空後再將Microtask放入並清空，之後結束循環
