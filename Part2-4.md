@@ -5,14 +5,15 @@
 這是 Java 的 Class
 
 1. 分成 Class 和 Object 兩種，**兩者不一樣**。
-1. Class 內部會描述 Properties 和 Method。
-1. Class 能建構出 Object ，也被稱作 Instance 。
-1. Instance 能夠使用 Class 內的 Method，並藉由 Method 存取 Object 內的資料。
+1. Class 內部會描述 Properties(屬性) 和 Method(方法)。
+1. Class 能建構出 Object ，也被稱作 Instance(實例) 。
+1. 實例能夠使用 Class 的方法，並藉由方法存取 Object 內的屬性。
 
 ### Class-Based 語言 與 Js(Prototype-Based)的差別
 
-JS 是 **Prototype-Based** 基於原型的程式語言，相對於**Class-Based**基於類的語言
-兩者的差別在於:
+JS 是 **Prototype-Based** 基於原型的程式語言，它使用原型鏈來實現對象的繼承和屬性共享。通過定義構造函數和在其原型（prototype）對象上的屬性和方法來創建對象。當實例對象時，它會從其原型繼承屬性和方法。  
+
+相對於**Class-Based**基於類的語言兩者的差別在於:
 
 - Class-Based 擁有 class 才能產生出對應的 Instance(實例)
 
@@ -66,7 +67,8 @@ dog.speak(); // Rex barks.
 ```
 
 :::info
-js 的 class 只是用 Class 包裝的 Prototype-Based
+js 的 class 只是用 Class 包裝的 Prototype-Based  
+class亦是模仿Class-based是所引入的語法糖
 :::
 
 ---
@@ -129,17 +131,16 @@ dog.speak(); // 輸出: Rex makes a noise.
 
 ```
 
-## coustructor
-
-constructor 方法是類的默認方法，通過 new 命令生成對象實例時，自動調用該方法。
-一個類必須有 constructor 方法，如果沒有顯式定義，一個空的 constructor 方法會被默認添加。
+## coustructor建構函式
+constructor function是class的默認建構函式，通過 new 命令生成對象實例時，自動調用該function。
+一個class必須有 constructor function，如果沒有顯式定義，一個空的constructor function也會被默認添加。
 
 ```javascript=
 class Point { }
 console.log(Point.prototype); // {constructor: ƒ}
 ```
 
-## 繼承 (extends)
+## 繼承 (extends / inheritance)
 
 class 使用 extends 繼承這個機制允許一個 class(子類)獲得另一個 class(父類)的屬性及方法。
 繼承的好處：
@@ -197,12 +198,10 @@ animals.forEach(animal => {
 - 多態性：通過 class Animal 的繼承，每個動物類型在執行 **move()** 這個 <span style="color:#b50303">"相同的接口"</span> 時會根據其實際內容表現出不同的行動（Bird 會飛，Dog 會跑）。
 
 ### super()
-
 "super"關鍵字用於從子類中調用父類的構造函數、方法、或訪問父類的屬性
 "super"可以兩種情境下發揮作用
 
-1. 在子類的構造函數中調用父類的構造函數
-
+1. 在子類的構造函數中調用父類的構造函式
 ```javascript=
 class Parent {
   constructor(name) {
@@ -257,40 +256,43 @@ class Child extends Parent {
 
 ```javascript=
 class Parent {
-  constructor(name) {
-    this.name = name;
-  }
-  run() {
-    console.log(`I'm running. ${this.name}`);
-  }
+    constructor(name) {
+        this.name = name;
+    }
+    run() {
+        console.log(`I'm running. ${this.name}`);
+    }
 }
 
 class Child extends Parent {
-  constructor(name, age) {
-    super("wowowo");
-    this.name = name;
-    this.age = age;
-  }
-  daily() {
-    super.run();
-    console.log("And make lunch.");
-  }
+    constructor(name, age) {
+        super(name);
+        this.age = age;
+    }
+    run() {
+        console.log("Child RUNNN");
+    }
+    daily() {
+        super.run(); // I'm running. Bob 調用父類的fn
+        this.run(); // Child RUNNN 使用子類的fn
+        console.log("And make lunch.");
+    }
 }
 
 const b = new Child("Bob", 19);
 b.daily();
 // I'm running. Bob
+// Child RUNNN
 // And make lunch.
 ```
 
 ## 多型(Polymorphism)
+繼承是多型能夠實現的必要條件，在物件導向設計中，多型是一個概念，其作用是讓多個不同的類能夠使用**相同的接口（interface ）**來操作。具體可以在父層提供**介面**或**抽象類別**來實現，不會發生錯誤。  
+![Polymorphism](https://hackmd.io/_uploads/S13Kzb3T6.png)  
+實例(a1, a2, b1, b2)和繼承 Foo 的子類 Bar，箭頭表示複製。  
+子類 Bar 可以通過多型來使用父類定義的方法，且該方法是一個副本，複寫並不會影響父類原先定義的內容
 
-繼承是多型能夠實現的必要條件，在物件導向設計中，多型是一個概念，其作用是讓多個不同的類能夠使用**相同的接口（interface ）**來操作。具體可以在父層提供**介面**或**抽象類別**來實現，不會發生錯誤。
-![218912](https://hackmd.io/_uploads/BJpmHbjpT.jpg)
-實例(a1, a2, b1,b2)和繼承 Foo 的子類 Bar，箭頭表示複製
-子類 Bar 可以通過多型來使用父類定義的 methods，且該 method 是一個副本，並複寫不會影響父類原先定義的內容
 **ex:**
-
 ```javascript=
 // 定義一個父類別 Animal，它有一個方法 speak
 class Animal {
@@ -324,14 +326,12 @@ const cat = new Cat();
 // 產生不同結果
 makeAnimalSpeak(dog); // 小狗汪
 makeAnimalSpeak(cat); // 小貓喵
-
-
 ```
 
 ## 多重繼承
 
-多重繼承指的是一個類別可以同時從多個父類別中繼承屬性和方法的能力
-![image](https://hackmd.io/_uploads/B1MEibwp6.png)
+多重繼承指的是一個類別可以同時從多個父類別中繼承屬性和方法的能力  
+![image](https://hackmd.io/_uploads/B1MEibwp6.png)  
 D 同時從 B, C 繼承
 
 然而，多重繼承也可能引入一些問題，例如：
@@ -341,8 +341,8 @@ D 同時從 B, C 繼承
 
 ### 用 JS 上做多重繼承 Mixin
 
-JS 沒有原生的機制做多重繼承，因為實際上 JS 只有物件，沒有 class
-混入（Mixin）就是一種模擬 class 複製並實現類似多重繼承效果的行為。
+JS 沒有原生的機制做多重繼承，因為實際上 JS 只有物件，沒有 class，
+混入（Mixin）就是一種模擬 class多重繼承效果的機制。
 又有兩種類型的混入:顯示跟隱式
 
 #### 顯示混入
